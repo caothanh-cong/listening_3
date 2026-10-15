@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEST | Listening Assignment</title>
+    <style>
+        :root {
+            --primary: #dc2626; /* Blood red */
+            --primary-hover: #b91c1c;
+            --success: #10b981; /* Green for correct */
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --bg-input: #262626;
+            --text-main: #f5f5f5;
+            --text-muted: #a3a3a3;
+            --border-color: #3f3f46;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #262626 0%, #121212 100%);
+            z-index: 10;
+        }
+
+        .login-logo {
+            width: 170px;
+            height: 170px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6), 0 0 25px rgba(220, 38, 38, 0.25);
+            border: 4px solid var(--primary);
+            background: #fff;
+        }
+
+        .login-form {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            border: 1px solid var(--border-color);
+            border-top: 4px solid var(--primary);
+            width: 320px;
+        }
+
+        .input-group { margin-bottom: 1.5rem; }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled {
+            background: #52525b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- Main Assignment Interface --- */
+        #assignment-screen {
+            display: none;
+            width: 100%;
+            max-width: 1600px;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 2rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-left { display: flex; align-items: center; }
+
+        .header-logo {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 1.5rem;
+            border: 2px solid var(--primary);
+            background: #fff;
+        }
+
+        .student-info span {
+            margin-right: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .timer {
+            font-family: monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+            background: var(--bg-input);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .timer.warning {
+            color: var(--primary);
+            border-color: var(--primary);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .audio-panel, .questions-container {
+            flex: 1;
+            padding: 2.5rem;
+            overflow-y: auto;
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+
+        .audio-panel {
+            border-right: 1px solid var(--border-color);
+            background: #171717;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .questions-container {
+            background: var(--bg-dark);
+            scroll-behavior: smooth;
+        }
+
+        .featured-image {
+            width: 100%;
+            max-width: 420px;
+            display: block;
+            margin: 0 auto 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            color: var(--text-main);
+            margin-top: 0;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+            width: 100%;
+        }
+
+        /* --- Audio Controls (volume only) --- */
+        .volume-control {
+            width: 100%;
+            max-width: 360px;
+            margin-top: 1rem;
+            padding: 1rem 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+        .volume-control .vol-label {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        #volume-slider {
+            width: 100%;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .audio-progress {
+            width: 100%;
+            max-width: 360px;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin-top: 1rem;
+            overflow: hidden;
+            pointer-events: none; /* display only, not clickable */
+        }
+
+        #audio-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            transition: width 0.5s linear;
+        }
+
+        #audio-status {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* --- Highlight Tool Styling --- */
+        mark.user-highlight {
+            background-color: rgba(236, 201, 75, 0.4);
+            color: inherit;
+            padding: 0.1rem 0;
+            border-radius: 2px;
+            cursor: pointer;
+            border-bottom: 1px dashed #ecc94b;
+        }
+
+        mark.user-highlight:hover { background-color: rgba(236, 201, 75, 0.6); }
+
+        #highlight-popup {
+            display: none;
+            position: fixed;
+            background: var(--bg-input);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            font-weight: bold;
+        }
+
+        #highlight-popup:hover {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        /* --- Questions --- */
+        .question-block {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--border-color);
+            transition: border-left-color 0.3s;
+        }
+
+        .question-block:hover { border-left-color: var(--primary); }
+
+        .q-input {
+            background: var(--bg-input);
+            border: 1px solid #71717a;
+            color: var(--text-main);
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            width: 160px;
+            font-family: monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .q-input:focus {
+            outline: none;
+            border-color: var(--text-main);
+        }
+
+        .q-input.correct {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .q-input.incorrect {
+            border-color: var(--primary);
+            background: rgba(220, 38, 38, 0.1);
+        }
+
+        /* --- Tables --- */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-table caption {
+            text-align: left;
+            font-weight: bold;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding-bottom: 0.5rem;
+        }
+
+        .info-table th, .info-table td {
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 0.9rem;
+            text-align: left;
+        }
+
+        .info-table th {
+            width: 38%;
+            background: var(--bg-input);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .table-wrap { margin-bottom: 1.75rem; }
+
+        /* --- Inline Explanations --- */
+        .explanation-box {
+            display: none;
+            margin-top: 0.75rem;
+            padding: 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            background: var(--bg-input);
+            border-left: 4px solid var(--border-color);
+        }
+
+        .explanation-box.correct-exp { border-left-color: var(--success); }
+        .explanation-box.incorrect-exp { border-left-color: var(--primary); }
+
+        .exp-text {
+            color: var(--text-muted);
+            display: block;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        /* --- Results Summary --- */
+        #results-summary {
+            display: none;
+            margin-top: 3rem;
+            padding: 2.5rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 30px rgba(220, 38, 38, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .score-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin: 0.5rem 0;
+            font-family: monospace;
+        }
+
+        .tier-message {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .tier-title {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        #sync-status {
+            display: block;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <img src="logo.png" alt="NEST Logo" class="login-logo">
+        <div class="login-form">
+            <div class="input-group">
+                <label>Student Name</label>
+                <input type="text" id="studentName" placeholder="Enter your full name" required autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>Class Code</label>
+                <input type="text" id="classCode" placeholder="e.g., N04A, N05C" required autocomplete="off">
+            </div>
+            <button onclick="startTest()">Commence Assignment</button>
+        </div>
+    </div>
+
+    <!-- Main Assignment Screen -->
+    <div id="assignment-screen">
+        <div class="header">
+            <div class="header-left">
+                <img src="logo.png" alt="NEST Logo" class="header-logo">
+                <div class="student-info">
+                    <span id="display-name">Student: </span>
+                    <span id="display-class">Class: </span>
+                </div>
+            </div>
+            <div class="timer" id="timer">07:00</div>
+        </div>
+
+        <div class="workspace">
+            <!-- Floating Highlight Popup -->
+            <div id="highlight-popup" onclick="applyHighlight()">Highlight</div>
+
+            <!-- Audio Panel -->
+            <div class="audio-panel">
+                <img id="art-image" src="art_listening_3.jpeg" alt="Travelling by train in New Zealand" class="featured-image">
+
+                <h3 style="color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin: 0.5rem 0;">Listening Exercise Audio</h3>
+                <p style="color: var(--text-muted); text-align: center; font-size: 0.9rem; max-width: 400px; margin-top: 0;">
+                    The audio playback has started automatically. You cannot pause, rewind or skip. Only the volume can be adjusted. Listen carefully to answer Questions 11-20.
+                </p>
+
+                <div class="volume-control">
+                    <div class="vol-label"><span>Volume</span><span id="volume-value">80%</span></div>
+                    <input type="range" id="volume-slider" min="0" max="100" value="80">
+                </div>
+
+                <div class="audio-progress"><div id="audio-progress-bar"></div></div>
+                <div id="audio-status">Preparing audio...</div>
+
+                <!-- No "controls" attribute: students cannot pause, seek or change speed -->
+                <audio id="audio-player" preload="auto" oncontextmenu="return false;">
+                    <source src="Listening_3.m4a" type="audio/mp4">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+
+            <!-- Questions -->
+            <div class="questions-container" id="quiz-form">
+
+                <h2>Part 2: Questions 11-20</h2>
+
+                <h3 style="margin-top: 1.5rem;">Questions 11-15</h3>
+                <p style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.95rem;">Complete the tables below. If there is no information given, write <strong>X</strong>.</p>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Write <strong>NO MORE THAN TWO WORDS AND/OR A NUMBER</strong> for each answer.</p>
+
+                <div class="question-block">
+                    <!-- Overlander -->
+                    <div class="table-wrap">
+                        <table class="info-table">
+                            <caption>Overlander</caption>
+                            <tr><th>Distance / km</th><td><strong>11.</strong> <input type="text" class="q-input" id="q11" autocomplete="off"></td></tr>
+                            <tr><th>Highlight</th><td>3 volcanoes</td></tr>
+                            <tr><th>Time / hours</th><td>11</td></tr>
+                        </table>
+                        <div id="exp11" class="explanation-box"></div>
+                    </div>
+
+                    <!-- Transalpine -->
+                    <div class="table-wrap">
+                        <table class="info-table">
+                            <caption>Transalpine</caption>
+                            <tr><th>Distance / km</th><td>223</td></tr>
+                            <tr><th>Highlight</th><td>16 <strong>12.</strong> <input type="text" class="q-input" id="q12" autocomplete="off"></td></tr>
+                            <tr><th>Time / hours</th><td><strong>13.</strong> <input type="text" class="q-input" id="q13" autocomplete="off"></td></tr>
+                        </table>
+                        <div id="exp12" class="explanation-box"></div>
+                        <div id="exp13" class="explanation-box"></div>
+                    </div>
+
+                    <!-- Transcoastal -->
+                    <div class="table-wrap" style="margin-bottom: 0;">
+                        <table class="info-table">
+                            <caption>Transcoastal</caption>
+                            <tr><th>Distance / km</th><td><strong>14.</strong> <input type="text" class="q-input" id="q14" autocomplete="off"></td></tr>
+                            <tr><th>Highlight</th><td><strong>15.</strong> <input type="text" class="q-input" id="q15" autocomplete="off"></td></tr>
+                            <tr><th>Time / hours</th><td>5</td></tr>
+                        </table>
+                        <div id="exp14" class="explanation-box"></div>
+                        <div id="exp15" class="explanation-box"></div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 2rem;">Questions 16-20</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Complete the summary below using <strong>NO MORE THAN TWO WORDS OR A NUMBER</strong> for each answer.</p>
+
+                <div class="question-block">
+                    <p>Taking three days to complete, the <strong>16.</strong> <input type="text" class="q-input" id="q16" autocomplete="off"> is one of the world's longest train journeys. The Ghan is shorter, passing through towns built by the <strong>17.</strong> <input type="text" class="q-input" id="q17" autocomplete="off">. There is also a sculpture designed to mark the laying of the <strong>18.</strong> <input type="text" class="q-input" id="q18" autocomplete="off"> concrete sleeper. The Overland was the first train to travel between the capital cities in two <strong>19.</strong> <input type="text" class="q-input" id="q19" autocomplete="off"> and it is also the oldest journey of its kind on <strong>20.</strong> <input type="text" class="q-input" id="q20" autocomplete="off">.</p>
+
+                    <div id="exp16" class="explanation-box"></div>
+                    <div id="exp17" class="explanation-box"></div>
+                    <div id="exp18" class="explanation-box"></div>
+                    <div id="exp19" class="explanation-box"></div>
+                    <div id="exp20" class="explanation-box"></div>
+                </div>
+
+                <button id="submitBtn" onclick="submitTest()" style="margin-top: 1rem; padding: 1.25rem;">Submit Assessment</button>
+
+                <!-- Results Summary Inline -->
+                <div id="results-summary">
+                    <div class="tier-title" id="tier-title">Score</div>
+                    <div class="score-display"><span id="final-score" style="color: var(--primary);">0</span>/10</div>
+                    <div class="tier-message" id="tier-message">Processing results...</div>
+                    <span id="sync-status">Syncing results to database...</span>
+                    <br>
+                    <button onclick="location.reload()" style="background: transparent; border: 1px solid var(--text-muted); color: var(--text-main); margin-top: 1rem; width: auto; padding: 0.75rem 2rem;">Return to Home</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ASSIGNMENT_NAME = "Listening Exercise 3 (Part 2): Traveling Around New Zealand";
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL7UqB79-fNZmL1Dskt5wOVgaur4qcYuyQvWosRVCWEFBg-clReIKD6BzGzf4cJkbz/exec';
+
+        let timeLeft = 7 * 60; // 7 minutes
+        let timerInterval;
+        let testStarted = false;
+        let testSubmitted = false;
+
+        const answerKey = {
+            q11: ["681"],
+            q12: ["tunnels"],
+            q13: ["5", "five"],
+            q14: ["x"],
+            q15: ["whale watching"],
+            q16: ["indian pacific", "the indian pacific"],
+            q17: ["earlier settlers", "early settlers"],
+            q18: ["1 millionth", "one millionth", "1000000th"],
+            q19: ["states"],
+            q20: ["the continent", "continent"]
+        };
+
+        // What is shown to the student as "the correct answer"
+        const answerDisplay = {
+            q11: "681",
+            q12: "tunnels",
+            q13: "5",
+            q14: "X",
+            q15: "whale watching",
+            q16: "Indian Pacific",
+            q17: "earlier / early settlers",
+            q18: "1 millionth",
+            q19: "states",
+            q20: "the continent"
+        };
+
+        const explanations = {
+            q11: "The keyword is 'Overlander', and you need its distance in km. The speaker mentions '681 kilometres' right after the keyword, so the answer is 681.",
+            q12: "The keyword is 'Transalpine' and the table already gives '16'. The speaker mentions sixteen tunnels, so the highlight is tunnels.",
+            q13: "For the time of the Transalpine you hear: '...Taking only five hours, this is a relatively short trip...'. The answer is 5.",
+            q14: "The keyword is 'Transcoastal'. The speaker gives no information about its distance in km, so the answer is X.",
+            q15: "Listen for '...the highlights of this journey...' in the section about the Transcoastal. The highlight is whale watching.",
+            q16: "The keywords are 'three days' and 'the world's longest train journeys'. The talk describes the three-night journey of the Indian Pacific.",
+            q17: "The keywords are 'passing through towns'. The answer is a kind of person, and after 'Crystal Brook, Port Augusta...' you hear earlier settlers.",
+            q18: "The keywords are 'sculpture', 'to mark' and 'concrete sleeper'. The speaker says the Iron Man sculpture was built 'to commemorate the one millionth concrete sleeper' (commemorate = mark).",
+            q19: "The keywords are 'capital cities' and 'two'. You hear: 'As the first train to travel between the capitals of two states...'.",
+            q20: "The keyword is 'the oldest journey'. The gap comes after the preposition 'on', and the answer is the continent."
+        };
+
+        // ---------- Featured image: tries common extensions automatically ----------
+        (function () {
+            const art = document.getElementById('art-image');
+            const options = ["art_listening_3.jpeg", "art_listening_3.jpg", "art_listening_3.png", "art_listening_3.webp"];
+            let idx = 0;
+            art.addEventListener('error', function () {
+                idx++;
+                if (idx < options.length) {
+                    art.src = options[idx];
+                } else {
+                    art.style.display = 'none';
+                }
+            });
+        })();
+
+        // ---------- Audio: volume control only ----------
+        const audio = document.getElementById('audio-player');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeValue = document.getElementById('volume-value');
+        const audioStatus = document.getElementById('audio-status');
+        const progressBar = document.getElementById('audio-progress-bar');
+        let lastAllowedTime = 0;
+
+        audio.volume = 0.8;
+        volumeSlider.addEventListener('input', function () {
+            audio.volume = this.value / 100;
+            volumeValue.innerText = `${this.value}%`;
+        });
+
+        // Block pausing (e.g., media keys), seeking and speed changes
+        audio.addEventListener('pause', function () {
+            if (testStarted && !testSubmitted && !audio.ended) {
+                audio.play().catch(() => {});
+            }
+        });
+
+        audio.addEventListener('ratechange', function () {
+            if (audio.playbackRate !== 1) audio.playbackRate = 1;
+        });
+
+        audio.addEventListener('seeking', function () {
+            if (Math.abs(audio.currentTime - lastAllowedTime) > 1.5) {
+                audio.currentTime = lastAllowedTime;
+            }
+        });
+
+        audio.addEventListener('timeupdate', function () {
+            lastAllowedTime = audio.currentTime;
+            if (audio.duration) {
+                progressBar.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+            }
+        });
+
+        audio.addEventListener('playing', function () {
+            audioStatus.innerText = "Now playing...";
+        });
+
+        audio.addEventListener('ended', function () {
+            audioStatus.innerText = "Audio finished. Complete your answers and submit.";
+            progressBar.style.width = "100%";
+        });
+
+        audio.addEventListener('error', function () {
+            audioStatus.innerText = "Audio could not be loaded. Please notify your instructor.";
+            audioStatus.style.color = "var(--primary)";
+        });
+
+        // ---------- Test-Grade Highlight Tool Logic ----------
+        let currentRange = null;
+
+        // Listener on the entire workspace so questions and text can be highlighted
+        document.querySelector('.workspace').addEventListener('mouseup', function (e) {
+            const selection = window.getSelection();
+            const popup = document.getElementById('highlight-popup');
+
+            if (!selection.isCollapsed && selection.toString().trim().length > 0) {
+                const range = selection.getRangeAt(0);
+                const workspaceContainer = document.querySelector('.workspace');
+
+                if (workspaceContainer.contains(range.commonAncestorContainer)) {
+                    currentRange = range;
+                    const rect = range.getBoundingClientRect();
+
+                    popup.style.top = `${rect.top - 40}px`;
+                    popup.style.left = `${rect.left + (rect.width / 2) - 40}px`;
+                    popup.style.display = 'block';
+                    return;
+                }
+            }
+
+            if (e.target.id !== 'highlight-popup') {
+                popup.style.display = 'none';
+            }
+        });
+
+        function applyHighlight() {
+            if (!currentRange) return;
+
+            try {
+                const fragment = currentRange.extractContents();
+                const mark = document.createElement('mark');
+
+                mark.className = 'user-highlight';
+                mark.title = 'Click to remove highlight';
+
+                // Click a highlight to remove it (keeps nested formatting)
+                mark.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const parent = this.parentNode;
+                    while (this.firstChild) {
+                        parent.insertBefore(this.firstChild, this);
+                    }
+                    parent.removeChild(this);
+                    parent.normalize();
+
+                    window.getSelection().removeAllRanges();
+                    document.getElementById('highlight-popup').style.display = 'none';
+                });
+
+                mark.appendChild(fragment);
+                currentRange.insertNode(mark);
+                window.getSelection().removeAllRanges();
+            } catch (err) {
+                console.log("Cross-boundary highlight restricted.", err);
+                alert("Please highlight text within a single paragraph or section.");
+            }
+
+            document.getElementById('highlight-popup').style.display = 'none';
+            currentRange = null;
+        }
+
+        // ---------- Test flow ----------
+        function startTest() {
+            const name = document.getElementById('studentName').value.trim();
+            const code = document.getElementById('classCode').value.trim();
+
+            if (!name || !code) {
+                alert("Student Name and Class Code are required before accessing the file.");
+                return;
+            }
+
+            document.getElementById('display-name').innerText = `Student: ${name}`;
+            document.getElementById('display-class').innerText = `Class: ${code}`;
+
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('assignment-screen').style.display = 'flex';
+
+            testStarted = true;
+
+            // Start audio (the button click counts as the user interaction browsers require)
+            audio.play().catch(() => {
+                audioStatus.innerText = "Audio could not start. Please notify your instructor.";
+                audioStatus.style.color = "var(--primary)";
+            });
+
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                submitTest();
+                return;
+            }
+
+            timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerDisplay = document.getElementById('timer');
+
+            timerDisplay.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            if (timeLeft <= 60) {
+                timerDisplay.classList.add('warning');
+            }
+        }
+
+        function cleanString(str) {
+            return str.toLowerCase().replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
+        }
+
+        function submitTest() {
+            if (testSubmitted) return;
+            testSubmitted = true;
+
+            clearInterval(timerInterval);
+            let score = 0;
+            const total = 10;
+            const name = document.getElementById('studentName').value.trim() || "Anonymous (Timeout)";
+            const studentClass = document.getElementById('classCode').value.trim() || "Unknown";
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing Results...";
+
+            // Stop audio
+            audio.pause();
+
+            // Grade Q11-Q20
+            for (let i = 11; i <= 20; i++) {
+                const inputEl = document.getElementById(`q${i}`);
+                const expBox = document.getElementById(`exp${i}`);
+                const inputVal = cleanString(inputEl.value);
+                inputEl.disabled = true;
+
+                if (answerKey[`q${i}`].some(ans => cleanString(ans) === inputVal)) {
+                    score++;
+                    inputEl.classList.add('correct');
+                    expBox.classList.add('correct-exp');
+                    expBox.innerHTML = `<span style="color: var(--success); font-weight: bold;">Q${i} Correct! ✅</span><span class="exp-text">Explanation: "${explanations[`q${i}`]}"</span>`;
+                } else {
+                    inputEl.classList.add('incorrect');
+                    expBox.classList.add('incorrect-exp');
+                    expBox.innerHTML = `<span style="color: var(--primary); font-weight: bold;">Q${i} Incorrect ❌</span> The correct answer is: <strong>${answerDisplay[`q${i}`]}</strong><span class="exp-text">Explanation: "${explanations[`q${i}`]}"</span>`;
+                }
+                expBox.style.display = 'block';
+            }
+
+            displayResults(score);
+
+            // Google Sheets sync
+            const submission = new URLSearchParams();
+            submission.set("assignmentName", ASSIGNMENT_NAME);
+            submission.set("assignment", ASSIGNMENT_NAME);
+            submission.set("name", name);
+            submission.set("studentClass", studentClass);
+            submission.set("score", String(score));
+            submission.set("total", String(total));
+
+            const syncStatus = document.getElementById('sync-status');
+
+            fetch(`${GOOGLE_SCRIPT_URL}?${submission.toString()}`, {
+                method: "GET",
+                mode: "no-cors",
+                cache: "no-store"
+            })
+            .then(() => {
+                submitBtn.innerText = "Results Submitted successfully";
+                submitBtn.style.background = "#10b981";
+                if (syncStatus) {
+                    syncStatus.innerText = "Grades synced with the central database.";
+                    syncStatus.style.color = "var(--success)";
+                }
+            })
+            .catch(() => {
+                submitBtn.innerText = "Submission Error";
+                submitBtn.style.background = "#52525b";
+                if (syncStatus) {
+                    syncStatus.innerText = "Error syncing results. Please notify your instructor.";
+                    syncStatus.style.color = "var(--primary)";
+                }
+            });
+        }
+
+        function displayResults(score) {
+            const summaryBox = document.getElementById('results-summary');
+            const scoreDisplay = document.getElementById('final-score');
+            const messageDisplay = document.getElementById('tier-message');
+            const titleDisplay = document.getElementById('tier-title');
+
+            summaryBox.style.display = 'block';
+            scoreDisplay.innerText = score;
+
+            if (score >= 9) {
+                titleDisplay.innerText = "Excellent";
+                titleDisplay.style.color = "#10b981";
+                scoreDisplay.style.color = "#10b981";
+                messageDisplay.innerText = "Great job, you have a strong understanding of the material.";
+            } else if (score >= 6) {
+                titleDisplay.innerText = "Good";
+                titleDisplay.style.color = "#3b82f6";
+                scoreDisplay.style.color = "#3b82f6";
+                messageDisplay.innerText = "Solid work, but there is some room for improvement.";
+            } else if (score >= 4) {
+                titleDisplay.innerText = "Fair";
+                titleDisplay.style.color = "#f59e0b";
+                scoreDisplay.style.color = "#f59e0b";
+                messageDisplay.innerText = "Review the explanations and try to catch more details next time.";
+            } else {
+                titleDisplay.innerText = "Needs Improvement";
+                titleDisplay.style.color = "#dc2626";
+                scoreDisplay.style.color = "#dc2626";
+                messageDisplay.innerText = "Keep practicing your listening skills.";
+            }
+
+            setTimeout(() => {
+                summaryBox.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 300);
+        }
+    </script>
+</body>
+</html>
